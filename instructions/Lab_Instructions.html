@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CS3616: Agentic SE Lab — Dissect an Agent</title>
+<style>
+  :root{
+    --accent:#4f46e5;
+    --accent-soft:#eef2ff;
+    --ink:#1f2937;
+    --muted:#6b7280;
+    --border:#e5e7eb;
+    --code-bg:#0f172a;
+    --code-ink:#e2e8f0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);
+    line-height:1.65;
+    max-width:860px;
+    margin:0 auto;
+    padding:48px 24px 96px;
+    background:#fff;
+  }
+  h1{
+    font-size:2rem;
+    line-height:1.2;
+    margin:0 0 .25em;
+    padding-bottom:.4em;
+    border-bottom:3px solid var(--accent);
+  }
+  h3{font-size:1.1rem;margin:1.4em 0 .4em;}
+  p{margin:.6em 0;}
+  a{color:var(--accent);}
+  code{
+    background:var(--accent-soft);
+    color:#3730a3;
+    padding:.12em .4em;
+    border-radius:4px;
+    font-family:"SF Mono",Menlo,Consolas,monospace;
+    font-size:.88em;
+  }
+  pre{
+    background:var(--code-bg);
+    color:var(--code-ink);
+    padding:16px 18px;
+    border-radius:10px;
+    overflow-x:auto;
+    font-size:.86rem;
+    line-height:1.5;
+  }
+  pre code{background:none;color:inherit;padding:0;font-size:inherit;}
+  table{border-collapse:collapse;width:100%;margin:1em 0;font-size:.94rem;}
+  th,td{border:1px solid var(--border);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:var(--accent-soft);color:#3730a3;}
+  tr:nth-child(even) td{background:#fafafa;}
+  blockquote{
+    margin:1.1em 0;
+    padding:12px 18px;
+    background:#fffbeb;
+    border-left:4px solid #f59e0b;
+    border-radius:0 8px 8px 0;
+  }
+  blockquote p{margin:.2em 0;}
+  ul,ol{margin:.6em 0;padding-left:1.4em;}
+  li{margin:.3em 0;}
+  .meta{
+    background:var(--accent-soft);
+    border-radius:10px;
+    padding:14px 18px;
+    margin:1.2em 0;
+    font-size:.95rem;
+  }
+  .meta p{margin:.2em 0;}
+  .note{color:var(--muted);font-size:.9rem;}
+  details{
+    border:1px solid var(--border);
+    border-radius:12px;
+    margin:14px 0;
+    padding:0 22px;
+    background:#fff;
+    transition:box-shadow .15s ease;
+  }
+  details[open]{box-shadow:0 2px 14px rgba(79,70,229,.08);padding-bottom:18px;}
+  summary{
+    cursor:pointer;
+    list-style:none;
+    padding:18px 0;
+    font-size:1.3rem;
+    font-weight:700;
+    color:var(--accent);
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  summary::-webkit-details-marker{display:none;}
+  summary::before{
+    content:"▸";
+    font-size:.9rem;
+    color:var(--muted);
+    transition:transform .15s ease;
+  }
+  details[open] summary::before{transform:rotate(90deg);}
+  .step-num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:30px;height:30px;border-radius:50%;
+    background:var(--accent);color:#fff;font-size:1rem;flex:0 0 auto;
+  }
+  details.sub{border-color:var(--border);background:#fafafa;margin:10px 0;padding:0 16px;}
+  details.sub summary{font-size:.95rem;font-weight:600;color:var(--ink);padding:12px 0;}
+  details.sub summary::before{content:"＋";font-weight:700;}
+  details.sub[open] summary::before{content:"－";transform:none;}
+  details.sub[open]{box-shadow:none;padding-bottom:14px;}
+  .badge{
+    display:inline-block;font-size:.68rem;font-weight:700;letter-spacing:.04em;
+    text-transform:uppercase;padding:3px 9px;border-radius:999px;vertical-align:middle;
+  }
+  .badge.req{background:#dcfce7;color:#166534;}
+  .badge.chal{background:#fae8ff;color:#86198f;}
+  summary .badge{margin-left:auto;font-size:.62rem;}
+  .four{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:1em 0;}
+  .four div{border:1px solid var(--border);border-radius:10px;padding:10px 14px;background:#fafafa;}
+  .four strong{color:var(--accent);}
+</style>
+</head>
+<body>
+
+<h1>Agentic SE Lab — Dissect an Agent</h1>
+
+<div class="meta">
+  <p><strong>Module:</strong> CS3616 Software Engineering · <em>Agentic Software Engineering, Lecture 1</em></p>
+  <p><strong>You will need:</strong> VS Code, Python 3.10+, <code>git</code>, and the class API key (provided in Setup below).</p>
+  <p><strong>Lab form:</strong> record your Warm-up, Part A and Part C answers in the <a href="https://forms.cloud.microsoft/e/2cMsHKPQd6">lab form</a>.</p>
+  <p><strong>Time:</strong> ~30–40 minutes &nbsp;·&nbsp; <strong>Format:</strong> individual or pairs</p>
+</div>
+
+<p><strong>What this agent is, in one line:</strong> an <strong>events finder</strong> — you tell it your interests and your city, it searches the web for upcoming tech events, hackathons and meetups, and gives you a short list with dates, venues and sign-up links.</p>
+
+<p><strong>The big idea:</strong> the lecture said an agent is <em>a language model that uses tools in a loop to reach a goal</em>. People talk about "agents" as if they were magic. They are not. In this lab you take a real one apart: about 40 lines of Python — a <strong>loop</strong>, some <strong>tools</strong>, a <strong>memory</strong> file — wrapped around <strong>one call to a model</strong>. You run it, watch it decide to search the web for evidence, then change what it does by editing its memory and giving it a new tool.</p>
+
+<p>The model is real (a free <code>gpt-oss</code> model running on Groq), so you see it genuinely <em>choose</em> when to reach for a tool. Everything around the model is plain code you can read in <code>agent/</code>. Take the model away and the "agent" can't think — that is the whole point.</p>
+
+<!-- ============ WARM-UP GAME ============ -->
+<details open>
+  <summary><span class="step-num">🎮</span> Warm-up — the concept game <span class="badge req">5 min</span></summary>
+  <p>Open <code>instructions/Concept_Game.html</code> in a browser and play the five quick rounds: LLM vs agent, the four components, the autonomy spectrum, the agent loop, and the engineer's new responsibilities. Argue about the answers with the person next to you.</p>
+  <blockquote><p>📝 <strong>Checkpoint:</strong> which round did you disagree on? Write down the concept you were least sure about. &nbsp;<strong>➡️ Record this in the <a href="https://forms.cloud.microsoft/e/2cMsHKPQd6">lab form</a>.</strong></p></blockquote>
+</details>
+
+<!-- ============ SETUP ============ -->
+<details open>
+  <summary><span class="step-num">0</span> Setup <span class="badge req">Compulsory</span></summary>
+
+  <p>Clone the lab repository, then open the <code>AgenticLab</code> folder in VS Code and open a terminal (<strong>Terminal → New Terminal</strong>):</p>
+  <pre><code>git clone https://github.com/BrunelTeaching/AgenticLab.git
+cd AgenticLab</code></pre>
+  <p>Create a virtual environment and install the dependencies:</p>
+  <pre><code>python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+python -m pip install -r requirements.txt</code></pre>
+
+  <p>Confirm the offline test suite passes (no key needed — these dissect the loop):</p>
+  <pre><code>bash check.sh                      # expect: 5 passed, 1 skipped</code></pre>
+
+  <p>For the live runs you need the class API key — <strong>your lecturer shares it on Brightspace / in the lab</strong> (it isn't in this repo). Set it in your terminal, pasting the real key in place of <code>gsk_...</code>:</p>
+  <pre><code># macOS / Linux
+export GROQ_API_KEY=gsk_...
+
+# Windows PowerShell
+$env:GROQ_API_KEY="gsk_..."</code></pre>
+
+  <blockquote><p>ℹ️ If the class key doesn't work (it can get busy when lots of us run at once), make your own free one in two minutes at <a href="https://console.groq.com">console.groq.com</a> (sign in → <strong>API Keys → Create</strong>) and export that instead.</p></blockquote>
+
+  <p>The folder:</p>
+  <pre><code>AgenticLab/
+├── run.py                  # ask the agent what's on, watch the loop
+├── agent/
+│   ├── model.py            # the ONLY call to the LLM — the agent wraps this
+│   ├── memory.py           # MEMORY: AGENTS.md → the system prompt
+│   ├── tools.py            # TOOLS: web_search (+ what you add in Part C)
+│   └── harness.py          # the Think → Act → Observe LOOP (~a dozen lines)
+├── workspace/AGENTS.md     # the agent's memory (you edit in Part B)
+├── tests/                  # offline tests (scripted model, no key/network)
+└── solutions/              # reference answers — peek only if stuck</code></pre>
+
+  <blockquote><p>📝 <strong>Checkpoint:</strong> did <code>check.sh</code> show <code>5 passed, 1 skipped</code>?</p></blockquote>
+</details>
+
+<!-- ============ PART A ============ -->
+<details>
+  <summary><span class="step-num">A</span> Run it, and watch the model decide <span class="badge req">Compulsory</span></summary>
+
+  <p>Ask it something it can answer from general knowledge:</p>
+  <pre><code>python run.py "What is a hackathon?"</code></pre>
+  <p>It answers straight away — <strong>no tool call</strong>, one trip to the model. Now ask it to actually find some, which it can't know from training alone:</p>
+  <pre><code>python run.py "AI hackathons for students in London this term"</code></pre>
+  <p>This time the loop has more steps — the model <em>chooses</em> to search:</p>
+  <pre><code>QUESTION  AI hackathons for students in London this term
+STEP 1  THINK   I need to look up current events.
+STEP 1  ACT     web_search({'query': 'student AI hackathons London 2026'})
+STEP 1  OBSERVE Results for 'student AI hackathons London 2026':
+STEP 2  THINK   Here are three upcoming ones ...
+ANSWER  1. HackLondon — Sat 6 Dec, Brunel University — https://...
+        2. ...</code></pre>
+  <p>Same code, same model — the <strong>only</strong> difference is that the model decided it needed current information and reached for a tool. That decision, made by the model and carried out by the harness, is what makes this an agent and not a chatbot. Try a few of your own — your real interests, your real city.</p>
+
+  <h3>Open the agent and find the model</h3>
+  <p>Read <code>agent/harness.py</code> — the whole loop is about a dozen lines: call the model, if it asked for a tool run it and feed the result back, otherwise return the answer. Then open <code>agent/model.py</code>: <strong>one</strong> function calls the model. That is the entire "intelligence". Everything else is ordinary code.</p>
+
+  <details class="sub">
+    <summary>Same shape as Claude Code and opencode</summary>
+    <p>Real terminal agents run this exact loop with a real LLM in the <code>model.py</code> slot and richer tools (<code>read</code>, <code>edit</code>, <code>bash</code>). Give a goal → model asks for a tool → harness runs it → result goes back → repeat until done. You've just built the smallest honest version of one.</p>
+  </details>
+
+  <div class="four">
+    <div><strong>Model</strong> — <code>model.py</code>: the one model call the agent wraps</div>
+    <div><strong>Memory</strong> — <code>AGENTS.md</code> in the system prompt (the persona, the list format, "don't invent events")</div>
+    <div><strong>Tools</strong> — <code>web_search</code>; its result is fed back into the loop</div>
+    <div><strong>Loop</strong> — <code>harness.py</code>: Think → Act → Observe until the model is done</div>
+  </div>
+
+  <blockquote><p>📝 <strong>Checkpoint:</strong> for each of your two requests, how many times did the loop call the model, and did it search? Why the difference? &nbsp;<strong>➡️ Record this in the <a href="https://forms.cloud.microsoft/e/2cMsHKPQd6">lab form</a>.</strong></p></blockquote>
+</details>
+
+<!-- ============ PART B ============ -->
+<details>
+  <summary><span class="step-num">B</span> Change the agent by editing its MEMORY <span class="badge req">Compulsory</span></summary>
+
+  <p>Open <code>workspace/AGENTS.md</code>. This file is loaded into the model's system prompt on every call, so it steers the agent — <strong>with no code change</strong>. Make a few edits and re-run to feel it:</p>
+  <ul>
+    <li>Change <code>up to <strong>3</strong> events</code> to <code>up to <strong>5</strong> events</code>, and add <code>- For each event, add a one-line "why you'd go".</code></li>
+    <li>Add a rule: <code>- Only list events that are free to attend.</code> — the shortlist changes.</li>
+    <li>Add a rule: <code>- Always answer in French.</code> — and watch the whole agent switch language.</li>
+  </ul>
+  <pre><code>python run.py "game-dev meetups near Uxbridge"</code></pre>
+  <p>Nothing in the Python changed — you reprogrammed the agent's behaviour through a text file. This is the single most important skill in agentic engineering: you steer an agent by curating its context.</p>
+
+  <details class="sub">
+    <summary>No API key handy?</summary>
+    <p>You can still prove the memory reaches the model. Run:</p>
+    <pre><code>python -c "from pathlib import Path; from agent.memory import load_system_prompt; print(load_system_prompt(Path('workspace')))"</code></pre>
+    <p>Your edited rules appear in the system prompt the model receives on every call.</p>
+  </details>
+
+  <details class="sub">
+    <summary>Why this matters</summary>
+    <p>Real tools work the same way: Claude Code reads <code>CLAUDE.md</code>, many agents read the <code>AGENTS.md</code> convention. Build commands, conventions, tone and no-go zones live in memory, not in prompts you retype. A good <code>AGENTS.md</code> is portable — it moves with you when you switch tools.</p>
+  </details>
+
+  <blockquote><p>📝 <strong>Checkpoint:</strong> paste one answer from before and after an edit. Which rule did you change, and which code file did you touch? (None.)</p></blockquote>
+</details>
+
+<!-- ============ PART C ============ -->
+<details>
+  <summary><span class="step-num">C</span> Give the agent a new TOOL <span class="badge req">Compulsory</span></summary>
+
+  <p>Event-hunting involves a bit of maths — "how many days until it?", "is the ticket under £20?" — and language models are notoriously shaky at arithmetic. Give the agent a <strong>calculator</strong> so it can work numbers out properly instead of guessing. Try a sum first:</p>
+  <pre><code>python run.py "How many days are there in 7 weeks?"</code></pre>
+  <p>It may slip up, or awkwardly search the web. Give it a proper tool instead.</p>
+
+  <h3>1. Write the tool function</h3>
+  <p>Open <code>agent/tools.py</code>. Next to <code>_web_search</code>, add a calculator (safe — it parses the expression rather than running <code>eval</code>):</p>
+  <pre><code>import ast, operator
+_OPS = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul,
+        ast.Div: operator.truediv, ast.Pow: operator.pow, ast.USub: operator.neg}
+def _calc(node):
+    if isinstance(node, ast.Constant): return node.value
+    if isinstance(node, ast.BinOp):   return _OPS[type(node.op)](_calc(node.left), _calc(node.right))
+    if isinstance(node, ast.UnaryOp): return _OPS[type(node.op)](_calc(node.operand))
+    raise ValueError("unsupported")
+def _calculator(args):
+    try:    return f"{args['expression']} = {_calc(ast.parse(args['expression'], mode='eval').body)}"
+    except Exception as e: return f"calculator error: {e}"</code></pre>
+
+  <h3>2. Register it — a name, a description, an input schema</h3>
+  <p>Add a <code>Tool(...)</code> to the <code>BUILTIN_TOOLS</code> list. The <strong>description</strong> is what the model reads to decide when to reach for it:</p>
+  <pre><code>Tool(
+    name="calculator",
+    description="Evaluate an arithmetic expression, e.g. '7 * 7'. Use this for "
+                "any maths rather than working it out yourself.",
+    input_schema={"type": "object",
+                  "properties": {"expression": {"type": "string"}},
+                  "required": ["expression"]},
+    run=_calculator,
+),</code></pre>
+
+  <h3>3. Watch the model choose between tools</h3>
+  <pre><code>python run.py "How many days are there in 7 weeks?"   # now ACT calculator(...) -> 49
+python run.py "AI hackathons in London this term"     # still ACT web_search(...)</code></pre>
+  <p>You gave the agent a new ability by <strong>registering a tool</strong> — the loop in <code>harness.py</code> never changed. And notice the model now <em>picks</em> the right tool per request: numbers → calculator, events → search. That routing is the model's job; your job was to offer the tool.</p>
+
+  <h3>4. Prove it with the tests</h3>
+  <p>Open <code>tests/test_part_c.py</code>, delete the <code>pytest.skip(...)</code> line near the top, then:</p>
+  <pre><code>pytest -q        # expect: 8 passed</code></pre>
+  <p>Stuck? Compare with <code>solutions/tools_calculator.py</code>.</p>
+
+  <blockquote><p>📝 <strong>Checkpoint:</strong> paste the <code>ACT calculator(...)</code> line from the trace. How many lines of <code>harness.py</code> did you change to add this ability? &nbsp;<strong>➡️ Record this in the <a href="https://forms.cloud.microsoft/e/2cMsHKPQd6">lab form</a>.</strong></p></blockquote>
+</details>
+
+<!-- ============ PART D ============ -->
+<details>
+  <summary><span class="step-num">D</span> Stretch <span class="badge chal">Challenge</span></summary>
+  <ul>
+    <li><strong>Add a <code>read_page</code> tool (the real two-step loop).</strong> Give the agent a tool that fetches a web page and strips it to text, so it can go <em>search → open the best result → read the date and venue</em>. A ready one is in <code>solutions/tools_read_page.py</code>; register it the same way and watch the trace show <code>web_search</code> then <code>read_page</code>.</li>
+    <li><strong>Swap the brain.</strong> Point <code>agent/model.py</code> at a different provider/model (e.g. a Groq model, or a smaller Gemini such as <code>gemini-3.6-flash</code>) by changing <code>BASE_URL</code> / <code>MODEL</code> / the key. Does a smaller model search more, or reason worse? This is the "agent is a wrapper around a model" point, made concrete.</li>
+    <li><strong>Break it on purpose.</strong> Comment out the tool-execution part of the loop in <code>harness.py</code>. The model still <em>asks</em> for tools, but nothing runs them — watch it get stuck. The harness is what makes tools real.</li>
+  </ul>
+  <blockquote><p>📝 <strong>Checkpoint:</strong> which did you try, and what did it show you about where the "intelligence" actually lives?</p></blockquote>
+</details>
+
+<!-- ============ WRAP-UP ============ -->
+<details>
+  <summary><span class="step-num">✓</span> What you just learned <span class="badge req">Reference</span></summary>
+  <table>
+    <thead><tr><th>You did</th><th>Which taught you</th></tr></thead>
+    <tbody>
+      <tr><td>Found the single model call inside the agent</td><td>An agent is a <strong>wrapper around a model</strong> — the loop, tools and memory are ordinary code.</td></tr>
+      <tr><td>Watched it search for one request, not another</td><td>The <strong>loop</strong> lets the model <em>choose</em> tools; that choice is what beats a chatbot.</td></tr>
+      <tr><td>Edited <code>AGENTS.md</code></td><td>You steer an agent through its <strong>memory</strong> — no code change.</td></tr>
+      <tr><td>Registered a <code>calculator</code> tool</td><td>Capabilities come from <strong>tools</strong> (name + description + schema); the loop stays the same.</td></tr>
+    </tbody>
+  </table>
+  <blockquote><p>🧭 The brands will change, but the anatomy won't: a model, a loop, tools, and memory. Once you've seen the forty lines, no agent is magic again.</p></blockquote>
+</details>
+
+<p style="margin-top:1.4em">🏁 <strong>When you're done</strong>, your agent should answer general questions without searching, search for events when it needs to, follow your edited memory, and do arithmetic with your new <code>calculator</code> tool — with <code>pytest -q</code> showing <code>8 passed</code>. Reference answers are in <code>solutions/</code>; try each part yourself first.</p>
+
+</body>
+</html>

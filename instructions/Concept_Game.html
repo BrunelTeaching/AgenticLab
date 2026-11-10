@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Agentic SE — Concept Check</title>
+<style>
+  :root{
+    --bg:#0F1B2D; --surface:#1A2A44; --surface-2:#22365A; --line:#2E4468;
+    --fg:#F7F5EF; --muted:#B9C6DA; --dim:#7E90AC;
+    --accent:#F26B21; --accent-soft:#FF9A5C; --blue:#8DB4FF;
+    --good:#49C98A; --bad:#F06A3C;
+    --mono:'JetBrains Mono','Courier New',monospace;
+    --display:'Space Grotesk','Trebuchet MS',sans-serif;
+    --body:'IBM Plex Sans',system-ui,Arial,sans-serif;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--fg); font-family:var(--body);
+    padding:24px max(20px,env(safe-area-inset-left)) 64px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1100px;margin:0 auto}
+  header{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 28px;justify-content:space-between;margin-bottom:22px}
+  .brand{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .eyebrow{font-family:var(--mono);font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--accent-soft)}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(30px,5vw,50px);line-height:1;margin:0}
+  .score{font-family:var(--mono);font-size:15px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:9px 18px;white-space:nowrap}
+  .score b{color:var(--accent-soft)}
+
+  .tabs{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:22px}
+  .tab{font-family:var(--display);font-weight:500;font-size:15px;color:var(--muted);background:var(--surface);
+    border:1px solid var(--line);border-radius:999px;padding:9px 16px;cursor:pointer;transition:.15s}
+  .tab:hover{color:var(--fg)}
+  .tab[aria-selected="true"]{background:var(--accent);color:#1a1200;border-color:var(--accent)}
+  .tab .n{font-family:var(--mono);opacity:.7;margin-right:7px}
+
+  .prompt{background:var(--surface);border-left:6px solid var(--accent);border-radius:14px;padding:18px 24px;margin-bottom:22px}
+  .prompt .think{font-family:var(--mono);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent-soft);margin:0 0 6px}
+  .prompt p{margin:0;font-size:clamp(18px,2.2vw,23px);line-height:1.35}
+
+  .items{display:flex;flex-direction:column;gap:14px}
+  .item{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 22px;display:flex;flex-direction:column;gap:14px}
+  .item .text{font-size:19px;line-height:1.45}
+  .item .text.code{font-family:var(--mono);font-size:18px;color:var(--blue)}
+  .choices{display:flex;flex-wrap:wrap;gap:10px}
+  .choice{font-family:var(--display);font-weight:500;font-size:15px;color:var(--fg);background:var(--surface-2);
+    border:1px solid var(--line);border-radius:10px;padding:10px 18px;cursor:pointer;transition:.12s}
+  .choice:hover{background:#2b4066;border-color:var(--blue)}
+  .choice:disabled{cursor:default;opacity:.85}
+  .choice.correct{background:rgba(73,201,138,.18);color:var(--good);border-color:var(--good)}
+  .choice.wrong{background:rgba(240,106,60,.18);color:var(--bad);border-color:var(--bad)}
+  .explain{display:none;font-size:16px;line-height:1.5;color:var(--muted);border-top:1px dashed var(--line);padding-top:12px}
+  .explain.show{display:block}
+  .explain b{color:var(--fg)}
+  :focus-visible{outline:3px solid var(--blue);outline-offset:3px;border-radius:6px}
+
+  .done{margin-top:20px;font-family:var(--display);font-size:20px;color:var(--good);display:none}
+  .done.show{display:block}
+  footer{margin-top:28px;font-family:var(--mono);font-size:13px;color:var(--dim)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="eyebrow">CS3616 · Agentic SE · Lecture 1</div>
+      <h1>Concept Check</h1>
+    </div>
+    <div class="score">Score <b id="score">0</b> / <span id="total">0</span></div>
+  </header>
+
+  <div class="tabs" id="tabs" role="tablist"></div>
+  <div class="prompt"><p class="think" id="roundLabel">Round</p><p id="roundPrompt"></p></div>
+  <div class="items" id="items"></div>
+  <div class="done" id="done">✓ Round complete — switch tabs to keep going.</div>
+
+  <footer>Click an answer to lock it in and reveal the explanation. No sign-in, nothing saved — just talk it through with your neighbour.</footer>
+</div>
+
+<script>
+const ROUNDS = [
+  {
+    label: "Round 1 · engine vs car",
+    prompt: "LLM alone, or a coding agent? Decide what each line describes.",
+    choices: ["LLM alone", "Coding agent"],
+    items: [
+      {text:"Predicts the next token behind an API.", answer:0, why:"A bare <b>LLM</b> is a next-token predictor. No tools, no actions."},
+      {text:"Runs the test suite, reads the failures, and tries again.", answer:1, why:"Running code and reacting to the result is the <b>agent</b> loop — a plain LLM can't see if code runs."},
+      {text:"Is stateless between calls.", answer:0, why:"<b>LLMs</b> carry no state between calls; the agent's harness is what adds memory."},
+      {text:"Opens a pull request when the task is done.", answer:1, why:"Taking an <b>action</b> in the world (a PR) is the agent, via a connector — not the model itself."},
+      {text:"Outputs text that may contain code, but can't tell if it runs.", answer:0, why:"That's the <b>LLM</b>: output is just text. Verification needs tools."},
+      {text:"Carries context and memory across many steps toward a goal.", answer:1, why:"Memory across steps + a goal = the <b>agent</b>: an LLM using tools in a loop."},
+    ]
+  },
+  {
+    label: "Round 2 · anatomy",
+    prompt: "Name the component: is each one Memory, Skills, Tools, or a Connector?",
+    choices: ["Memory","Skills","Tools","Connector"],
+    items: [
+      {text:"An AGENTS.md with build commands, conventions and no-go zones.", answer:0, why:"<b>Memory</b> — project memory any agent can read from the repo."},
+      {text:"A folder with a SKILL.md: a name, a description and step-by-step instructions.", answer:1, why:"<b>Skills</b> — packaged know-how, loaded on demand (progressive disclosure)."},
+      {text:"read, grep, edit, bash — the actions the agent can take.", answer:2, why:"<b>Tools</b> — a name, a description and an input schema the model can call."},
+      {text:"A GitHub MCP server the agent calls to fetch an issue.", answer:3, why:"<b>Connector</b> — reach to a system beyond the repo, over MCP."},
+      {text:"facts.json: notes the agent keeps across sessions.", answer:0, why:"<b>Memory</b> — long-term memory persisted between runs."},
+      {text:"web_search and web_fetch.", answer:2, why:"<b>Tools</b> — actions the agent takes; the web family of tools."},
+    ]
+  },
+  {
+    label: "Round 3 · who runs the code?",
+    prompt: "Same model underneath — the difference is who runs and checks the code. For each mode, who executes it?",
+    choices: ["The human runs it","The agent runs it"],
+    items: [
+      {text:"Autocomplete — the AI finishes the line as you type.", answer:0, why:"<b>Human</b> runs everything; the AI only suggests text. Least autonomy."},
+      {text:"Chat — you describe a problem and copy the answer back.", answer:0, why:"<b>Human</b> runs the code; the chatbot never executes anything."},
+      {text:"Terminal agent — you set the goal, it runs code and you review the diff.", answer:1, why:"The <b>agent</b> runs and checks first; the human reviews. Higher autonomy."},
+      {text:"Cloud agent — you assign a ticket and it returns a pull request.", answer:1, why:"The <b>agent</b> runs end-to-end in a sandbox; the human reviews the PR. Highest autonomy."},
+      {text:"IDE agent mode — it edits many files; you approve each step.", answer:1, why:"The <b>agent</b> executes the edits; the human gates each one. Autonomy is a dial."},
+    ]
+  },
+  {
+    label: "Round 4 · the loop",
+    prompt: "Trace of fixing issue #142. Is each line a THINK, an ACT, or an OBSERVE?",
+    choices: ["Think","Act","Observe"],
+    items: [
+      {text:"Where is login handled?", answer:0, why:"<b>Think</b> — the model decides the next step."},
+      {text:"grep \"login(\" src/", answer:1, code:true, why:"<b>Act</b> — the harness executes a tool call."},
+      {text:"→ src/auth/login.ts:12", answer:2, code:true, why:"<b>Observe</b> — the agent reads the tool's result and feeds it back."},
+      {text:"Reproduce the bug first with a failing test.", answer:0, why:"<b>Think</b> — planning the next action."},
+      {text:"npm test -- login", answer:1, code:true, why:"<b>Act</b> — running the tests is a tool call."},
+      {text:"1 failed: got 401", answer:2, code:true, why:"<b>Observe</b> — the result the agent reacts to. Then it loops again."},
+    ]
+  },
+  {
+    label: "Round 5 · myth-buster",
+    prompt: "True or false? These are about the engineer's new responsibilities.",
+    choices: ["True","False"],
+    items: [
+      {text:"A green CI run proves the agent's code is correct.", answer:1, why:"<b>False</b> — it proves the code clears the bar the team agreed. Review still owns design and business logic."},
+      {text:"Higher autonomy demands stronger verification.", answer:0, why:"<b>True</b> — the more the agent does unsupervised, the more evidence you need before trusting it."},
+      {text:"Autonomy is a dial you set per task, not a fixed property of a product.", answer:0, why:"<b>True</b> — the same tool can autocomplete or run a whole task, depending on how you use it."},
+      {text:"An agent can produce plausible code that calls APIs which don't exist.", answer:0, why:"<b>True</b> — invented APIs and plausible-but-wrong code are a key risk to watch for."},
+      {text:"Giving an agent write access and live credentials carries no new risk.", answer:1, why:"<b>False</b> — least privilege, read-only first, and beware prompt injection and leaked secrets."},
+      {text:"Autocomplete and a terminal coding agent sit at the same autonomy level.", answer:1, why:"<b>False</b> — autocomplete finishes a line; a terminal agent runs a whole task and reviews it."},
+    ]
+  },
+];
+
+let current = 0;
+let answered = {};        // "round:item" -> true once locked
+let score = 0, total = 0;
+
+ROUNDS.forEach(r => total += r.items.length);
+document.getElementById('total').textContent = total;
+
+const tabsEl = document.getElementById('tabs');
+ROUNDS.forEach((r, i) => {
+  const b = document.createElement('button');
+  b.className = 'tab';
+  b.setAttribute('role','tab');
+  b.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+  b.innerHTML = `<span class="n">${i+1}</span>${r.label.split('·')[1].trim()}`;
+  b.onclick = () => { current = i; render(); };
+  tabsEl.appendChild(b);
+});
+
+function render(){
+  [...tabsEl.children].forEach((t,i)=>t.setAttribute('aria-selected', i===current?'true':'false'));
+  const r = ROUNDS[current];
+  document.getElementById('roundLabel').textContent = r.label;
+  document.getElementById('roundPrompt').textContent = r.prompt;
+  const box = document.getElementById('items');
+  box.innerHTML = '';
+  r.items.forEach((it, idx) => {
+    const key = current + ':' + idx;
+    const card = document.createElement('div');
+    card.className = 'item';
+    const txt = document.createElement('div');
+    txt.className = 'text' + (it.code ? ' code' : '');
+    txt.textContent = it.text;
+    card.appendChild(txt);
+
+    const choices = document.createElement('div');
+    choices.className = 'choices';
+    r.choices.forEach((label, ci) => {
+      const c = document.createElement('button');
+      c.className = 'choice';
+      c.textContent = label;
+      c.onclick = () => pick(card, choices, ex, it, ci, key);
+      choices.appendChild(c);
+    });
+    card.appendChild(choices);
+
+    const ex = document.createElement('div');
+    ex.className = 'explain';
+    ex.innerHTML = it.why;
+    card.appendChild(ex);
+    box.appendChild(card);
+  });
+  updateDone();
+}
+
+function pick(card, choices, ex, it, ci, key){
+  if (answered[key]) return;
+  answered[key] = true;
+  [...choices.children].forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === it.answer) btn.classList.add('correct');
+    else if (i === ci) btn.classList.add('wrong');
+  });
+  if (ci === it.answer) score++;
+  document.getElementById('score').textContent = score;
+  ex.classList.add('show');
+  updateDone();
+}
+
+function updateDone(){
+  const r = ROUNDS[current];
+  const all = r.items.every((_, idx) => answered[current + ':' + idx]);
+  document.getElementById('done').classList.toggle('show', all);
+}
+
+render();
+</script>
+</body>
+</html>
